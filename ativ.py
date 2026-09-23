@@ -1,14 +1,17 @@
-import flet as ft 
+import flet as ft
 
-def main(page:ft.Page): 
-    page.title="PizzaDev"
-#Lista para guardar os pedidos
+
+def main(page: ft.Page):
+    page.title = "PizzaDev"
+
+    # Lista para guardar os pedidos
     pedidos = []
-#--------------------------------------------------------------
-#TITULO
-#--------------------------------------------------------------
 
-    titulo=ft.Text(
+    # --------------------------------------------------------------
+    # TITULO
+    # --------------------------------------------------------------
+
+    titulo = ft.Text(
         "PizzaDev",
         size=32,
         weight=ft.FontWeight.BOLD
@@ -19,22 +22,25 @@ def main(page:ft.Page):
     slogan = ft.Text("Piza nhamenhame")
     instrucao = ft.Text("Corta e depois come")
 
-#--------------------------------------------------------------
-#PEDIDOS
-#--------------------------------------------------------------
+    # --------------------------------------------------------------
+    # PEDIDOS
+    # --------------------------------------------------------------
 
-    campo_pedido = ft.TextField(label="Digite seu pedido",
-     expand=True
+    campo_pedido = ft.TextField(
+        label="Digite seu pedido",
+        expand=True
     )
+
     lista_pedidos = ft.Column(
         scroll=ft.ScrollMode.AUTO
     )
+
     def adicionar_pedido(e):
         pedido = campo_pedido.value.strip()
 
         if pedido == "":
             return
-        
+
         pedidos.append(pedido)
 
         lista_pedidos.controls.append(
@@ -49,44 +55,88 @@ def main(page:ft.Page):
 
         campo_pedido.value = ""
         page.update()
-#botão para adicionar os pedidos.
+
+    # Botão para adicionar os pedidos
     botao_adicionar = ft.Button(
-        content="Adicionar Pedido ",
+        content="Adicionar Pedido",
         on_click=adicionar_pedido
     )
+
     linha_pedido = ft.Row(
         controls=[
             campo_pedido,
             botao_adicionar
         ]
     )
-#--------------------------------------------------------------
-#CARDAPIO 
-#--------------------------------------------------------------
-    cardapio_titulo = ft.Text(
-         "🍕 CARDÁPIO",
-         size=28,
-         weight=ft.FontWeight.BOLD
 
+    # --------------------------------------------------------------
+    # CARDAPIO
+    # --------------------------------------------------------------
+
+    cardapio_titulo = ft.Text(
+        "🍕 CARDÁPIO",
+        size=28,
+        weight=ft.FontWeight.BOLD
     )
-#Pizza de calabresa
-    pizza_calabresa = ft.Container(
-    content=ft.Column(
-        controls=[
-            ft.Text(
-                "🍕 Calabresa",
-                size=20,
-                weight=ft.FontWeight.BOLD
-            ),
-            ft.Text(
-                "Ingredientes: calabresa, queijo, cebola e molho de tomate."
+
+    # --------------------------------------------------------------
+    # FUNÇÃO PARA CRIAR AS OPÇÕES DE TAMANHO
+    # --------------------------------------------------------------
+
+    def escolher_tamanho():
+        return ft.RadioGroup(
+            content=ft.Row(
+                controls=[
+                    ft.Radio(
+                        value="Pequena",
+                        label="Pequena"
+                    ),
+                    ft.Radio(
+                        value="Media",
+                        label="Média"
+                    ),
+                    ft.Radio(
+                        value="Grande",
+                        label="Grande"
+                    )
+                ]
             )
-        ]
-    ),
-    padding=15,
-    border=ft.Border.all(1, "orange")
-)
-     # Pizza de Frango
+        )
+
+    # --------------------------------------------------------------
+    # PIZZA DE CALABRESA
+    # --------------------------------------------------------------
+
+    tamanho_calabresa = escolher_tamanho()
+
+    pizza_calabresa = ft.Container(
+        content=ft.Column(
+            controls=[
+                ft.Text(
+                    "🍕 Calabresa",
+                    size=20,
+                    weight=ft.FontWeight.BOLD
+                ),
+                ft.Text(
+                    "Ingredientes: calabresa, queijo, cebola e molho de tomate."
+                ),
+                ft.Text(
+                    "Escolha o tamanho:",
+                    weight=ft.FontWeight.BOLD
+                ),
+                tamanho_calabresa
+            ]
+        ),
+        padding=15,
+        border=ft.Border.all(1, "orange")
+    )
+
+    # --------------------------------------------------------------
+    # PIZZA DE FRANGO
+    # --------------------------------------------------------------
+
+    tamanho_frango = escolher_tamanho()
+
     pizza_frango = ft.Container(
         content=ft.Column(
             controls=[
@@ -96,14 +146,25 @@ def main(page:ft.Page):
                     weight=ft.FontWeight.BOLD
                 ),
                 ft.Text(
-                    "Ingredientes: frango desfiado, catupiry, queijo e molho de tomate"
-                )
+                    "Ingredientes: frango desfiado, catupiry, queijo e molho de tomate."
+                ),
+                ft.Text(
+                    "Escolha o tamanho:",
+                    weight=ft.FontWeight.BOLD
+                ),
+                tamanho_frango
             ]
         ),
         padding=15,
         border=ft.Border.all(1, "orange")
     )
- # Pizza de Mussarela
+
+    # --------------------------------------------------------------
+    # PIZZA DE MUSSARELA
+    # --------------------------------------------------------------
+
+    tamanho_mussarela = escolher_tamanho()
+
     pizza_mussarela = ft.Container(
         content=ft.Column(
             controls=[
@@ -113,15 +174,25 @@ def main(page:ft.Page):
                     weight=ft.FontWeight.BOLD
                 ),
                 ft.Text(
-                    "Ingredientes: queijo mussarela, tomate, orégano e molho de tomate"
-                )
+                    "Ingredientes: queijo mussarela, tomate, orégano e molho de tomate."
+                ),
+                ft.Text(
+                    "Escolha o tamanho:",
+                    weight=ft.FontWeight.BOLD
+                ),
+                tamanho_mussarela
             ]
         ),
         padding=15,
         border=ft.Border.all(1, "orange")
     )
 
-    # Pizza Portuguesa
+    # --------------------------------------------------------------
+    # PIZZA PORTUGUESA
+    # --------------------------------------------------------------
+
+    tamanho_portuguesa = escolher_tamanho()
+
     pizza_portuguesa = ft.Container(
         content=ft.Column(
             controls=[
@@ -131,15 +202,25 @@ def main(page:ft.Page):
                     weight=ft.FontWeight.BOLD
                 ),
                 ft.Text(
-                    "Ingredientes: presunto, queijo, ovo, cebola, tomate e azeitona"
-                )
+                    "Ingredientes: presunto, queijo, ovo, cebola, tomate e azeitona."
+                ),
+                ft.Text(
+                    "Escolha o tamanho:",
+                    weight=ft.FontWeight.BOLD
+                ),
+                tamanho_portuguesa
             ]
         ),
         padding=15,
         border=ft.Border.all(1, "orange")
     )
 
-    # Pizza de Chocolate
+    # --------------------------------------------------------------
+    # PIZZA DE CHOCOLATE
+    # --------------------------------------------------------------
+
+    tamanho_chocolate = escolher_tamanho()
+
     pizza_chocolate = ft.Container(
         content=ft.Column(
             controls=[
@@ -149,17 +230,24 @@ def main(page:ft.Page):
                     weight=ft.FontWeight.BOLD
                 ),
                 ft.Text(
-                    "Ingredientes: chocolate, leite condensado e granulado"
-                )
+                    "Ingredientes: chocolate, leite condensado e granulado."
+                ),
+                ft.Text(
+                    "Escolha o tamanho:",
+                    weight=ft.FontWeight.BOLD
+                ),
+                tamanho_chocolate
             ]
         ),
         padding=15,
         border=ft.Border.all(1, "orange")
     )
 
-    #Coluna do cardapio
-    cardapio = ft.Column(
+    # --------------------------------------------------------------
+    # COLUNA DO CARDAPIO
+    # --------------------------------------------------------------
 
+    cardapio = ft.Column(
         controls=[
             cardapio_titulo,
 
@@ -169,12 +257,14 @@ def main(page:ft.Page):
                     pizza_frango
                 ]
             ),
+
             ft.Row(
                 controls=[
                     pizza_mussarela,
                     pizza_portuguesa
                 ]
             ),
+
             ft.Row(
                 controls=[
                     pizza_chocolate
@@ -184,9 +274,10 @@ def main(page:ft.Page):
         scroll=ft.ScrollMode.AUTO
     )
 
-#--------------------------------------------------------------
-#CONTEUDO PRINCIPAL
-#--------------------------------------------------------------
+    # --------------------------------------------------------------
+    # CONTEUDO PRINCIPAL
+    # --------------------------------------------------------------
+
     conteudo = ft.Column(
         controls=[
             titulo,
@@ -201,27 +292,32 @@ def main(page:ft.Page):
 
             ft.Text(
                 "Pedidos adicionados:",
-                size = 22,
+                size=22,
                 weight=ft.FontWeight.BOLD
             ),
+
             lista_pedidos,
 
             ft.Divider(),
-#cardapio separado
+
+            # Cardápio separado
             cardapio
-
-
         ],
         spacing=10,
         scroll=ft.ScrollMode.AUTO
     )
-    #container principal
-    tela= ft.Container(
-        content = conteudo,
+
+    # --------------------------------------------------------------
+    # CONTAINER PRINCIPAL
+    # --------------------------------------------------------------
+
+    tela = ft.Container(
+        content=conteudo,
         padding=20,
         expand=True
-
     )
 
     page.add(tela)
+
+
 ft.run(main)
