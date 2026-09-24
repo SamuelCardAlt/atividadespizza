@@ -93,14 +93,25 @@ def main(page: ft.Page):
                     ),
                     ft.Radio(
                         value="Media",
-                        label="Média"
+                        label="Média - R$ 32,00"
                     ),
                     ft.Radio(
                         value="Grande",
-                        label="Grande"
+                        label="Grande - R$ 42,00"
                     )
                 ]
             )
+        )
+
+    # --------------------------------------------------------------
+    # FUNÇÃO PARA CRIAR CAMPO DE QUANTIDADE
+    # --------------------------------------------------------------
+
+    def campo_quantidade():
+        return ft.TextField(
+            label="Quantidade (1 a 10)",
+            width=180,
+            keyboard_type=ft.KeyboardType.NUMBER
         )
 
     # --------------------------------------------------------------
@@ -108,6 +119,7 @@ def main(page: ft.Page):
     # --------------------------------------------------------------
 
     tamanho_calabresa = escolher_tamanho()
+    quantidade_calabresa = campo_quantidade()
 
     pizza_calabresa = ft.Container(
         content=ft.Column(
@@ -124,7 +136,8 @@ def main(page: ft.Page):
                     "Escolha o tamanho:",
                     weight=ft.FontWeight.BOLD
                 ),
-                tamanho_calabresa
+                tamanho_calabresa,
+                quantidade_calabresa
             ]
         ),
         padding=15,
@@ -136,6 +149,7 @@ def main(page: ft.Page):
     # --------------------------------------------------------------
 
     tamanho_frango = escolher_tamanho()
+    quantidade_frango = campo_quantidade()
 
     pizza_frango = ft.Container(
         content=ft.Column(
@@ -152,7 +166,8 @@ def main(page: ft.Page):
                     "Escolha o tamanho:",
                     weight=ft.FontWeight.BOLD
                 ),
-                tamanho_frango
+                tamanho_frango,
+                quantidade_frango
             ]
         ),
         padding=15,
@@ -164,6 +179,7 @@ def main(page: ft.Page):
     # --------------------------------------------------------------
 
     tamanho_mussarela = escolher_tamanho()
+    quantidade_mussarela = campo_quantidade()
 
     pizza_mussarela = ft.Container(
         content=ft.Column(
@@ -180,7 +196,8 @@ def main(page: ft.Page):
                     "Escolha o tamanho:",
                     weight=ft.FontWeight.BOLD
                 ),
-                tamanho_mussarela
+                tamanho_mussarela,
+                quantidade_mussarela
             ]
         ),
         padding=15,
@@ -192,6 +209,7 @@ def main(page: ft.Page):
     # --------------------------------------------------------------
 
     tamanho_portuguesa = escolher_tamanho()
+    quantidade_portuguesa = campo_quantidade()
 
     pizza_portuguesa = ft.Container(
         content=ft.Column(
@@ -208,7 +226,8 @@ def main(page: ft.Page):
                     "Escolha o tamanho:",
                     weight=ft.FontWeight.BOLD
                 ),
-                tamanho_portuguesa
+                tamanho_portuguesa,
+                quantidade_portuguesa
             ]
         ),
         padding=15,
@@ -220,6 +239,7 @@ def main(page: ft.Page):
     # --------------------------------------------------------------
 
     tamanho_chocolate = escolher_tamanho()
+    quantidade_chocolate = campo_quantidade()
 
     pizza_chocolate = ft.Container(
         content=ft.Column(
@@ -236,11 +256,114 @@ def main(page: ft.Page):
                     "Escolha o tamanho:",
                     weight=ft.FontWeight.BOLD
                 ),
-                tamanho_chocolate
+                tamanho_chocolate,
+                quantidade_chocolate
             ]
         ),
         padding=15,
         border=ft.Border.all(1, "orange")
+    )
+
+    # --------------------------------------------------------------
+    # RESULTADO DO CALCULO
+    # --------------------------------------------------------------
+
+    resultado = ft.Text(
+        "Parcial: R$ 0,00",
+        size=24,
+        weight=ft.FontWeight.BOLD
+    )
+
+    mensagem = ft.Text(
+        "",
+        size=16
+    )
+
+    # --------------------------------------------------------------
+    # FUNÇÃO PARA CALCULAR O PARCIAL
+    # --------------------------------------------------------------
+
+    def calcular(e):
+
+        total = 0
+
+        # Lista com todas as pizzas
+        pizzas = [
+            ("Calabresa", tamanho_calabresa, quantidade_calabresa),
+            ("Frango com Catupiry", tamanho_frango, quantidade_frango),
+            ("Mussarela", tamanho_mussarela, quantidade_mussarela),
+            ("Portuguesa", tamanho_portuguesa, quantidade_portuguesa),
+            ("Chocolate", tamanho_chocolate, quantidade_chocolate)
+        ]
+
+        for nome_pizza, tamanho, quantidade in pizzas:
+
+            # Se não informou quantidade, ignora essa pizza
+            if quantidade.value.strip() == "":
+                continue
+
+            try:
+                qtd = int(quantidade.value)
+
+            except ValueError:
+                mensagem.value = (
+                    f"A quantidade da pizza {nome_pizza} deve ser um número."
+                )
+                resultado.value = "Parcial: R$ 0,00"
+                page.update()
+                return
+
+            # Validação da quantidade
+            if qtd < 1 or qtd > 10:
+                mensagem.value = (
+                    f"A quantidade da pizza {nome_pizza} "
+                    f"deve estar entre 1 e 10."
+                )
+                resultado.value = "Parcial: R$ 0,00"
+                page.update()
+                return
+
+            # Verifica se escolheu o tamanho
+            if tamanho.value is None:
+                mensagem.value = (
+                    f"Escolha o tamanho da pizza {nome_pizza}."
+                )
+                resultado.value = "Parcial: R$ 0,00"
+                page.update()
+                return
+
+            # Define o preço
+            if tamanho.value == "Media":
+                preco = 32
+
+            elif tamanho.value == "Grande":
+                preco = 42
+
+            else:
+                mensagem.value = (
+                    f"A pizza {nome_pizza} está no tamanho Pequena, "
+                    f"mas o preço desse tamanho ainda não foi cadastrado."
+                )
+                resultado.value = "Parcial: R$ 0,00"
+                page.update()
+                return
+
+            # Calcula
+            total += preco * qtd
+
+        # Mostra o resultado
+        resultado.value = f"Parcial: R$ {total:.2f}".replace(".", ",")
+        mensagem.value = "Pedido calculado com sucesso!"
+
+        page.update()
+
+    # --------------------------------------------------------------
+    # BOTÃO CALCULAR
+    # --------------------------------------------------------------
+
+    botao_calcular = ft.Button(
+        content="Calcular",
+        on_click=calcular
     )
 
     # --------------------------------------------------------------
@@ -269,7 +392,15 @@ def main(page: ft.Page):
                 controls=[
                     pizza_chocolate
                 ]
-            )
+            ),
+
+            ft.Divider(),
+
+            botao_calcular,
+
+            resultado,
+
+            mensagem
         ],
         scroll=ft.ScrollMode.AUTO
     )
