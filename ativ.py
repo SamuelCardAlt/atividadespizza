@@ -1,14 +1,25 @@
 import flet as ft
 
-
 def main(page: ft.Page):
     page.title = "PizzaDev"
+    # --------------------------------------------------------------
+    # ESTADO DO PEDIDO
+    # --------------------------------------------------------------
 
-    # Lista para guardar os pedidos
-    pedidos = []
+    estado = {
+        "pizza": "",
+        "quantidade": 1
+    }
 
     # --------------------------------------------------------------
-    # TITULO
+    # LISTAS
+    # --------------------------------------------------------------
+
+    pedidos = []
+    pizzas = []
+
+    # --------------------------------------------------------------
+    # TÍTULO
     # --------------------------------------------------------------
 
     titulo = ft.Text(
@@ -21,6 +32,16 @@ def main(page: ft.Page):
     nome = ft.Text("Seu nome é Pizzaiolo")
     slogan = ft.Text("Piza nhamenhame")
     instrucao = ft.Text("Corta e depois come")
+
+    # --------------------------------------------------------------
+    # LINHA DO ESTADO
+    # --------------------------------------------------------------
+
+    pedido_edicao = ft.Text(
+        "Pedido em edição: Nenhuma pizza selecionada",
+        size=14,
+        italic=True
+    )
 
     # --------------------------------------------------------------
     # PEDIDOS
@@ -56,7 +77,6 @@ def main(page: ft.Page):
         campo_pedido.value = ""
         page.update()
 
-    # Botão para adicionar os pedidos
     botao_adicionar = ft.Button(
         content="Adicionar Pedido",
         on_click=adicionar_pedido
@@ -70,7 +90,7 @@ def main(page: ft.Page):
     )
 
     # --------------------------------------------------------------
-    # CARDAPIO
+    # CARDÁPIO
     # --------------------------------------------------------------
 
     cardapio_titulo = ft.Text(
@@ -80,7 +100,38 @@ def main(page: ft.Page):
     )
 
     # --------------------------------------------------------------
-    # FUNÇÃO PARA CRIAR AS OPÇÕES DE TAMANHO
+    # RESULTADO
+    # --------------------------------------------------------------
+
+    resultado = ft.Text(
+        "Parcial: R$ 0,00",
+        size=24,
+        weight=ft.FontWeight.BOLD
+    )
+
+    mensagem = ft.Text(
+        "",
+        size=16
+    )
+
+    # --------------------------------------------------------------
+    # FUNÇÃO PARA ATUALIZAR O ESTADO NO TOPO
+    # --------------------------------------------------------------
+
+    def atualizar_estado():
+        if estado["pizza"] == "":
+            pedido_edicao.value = (
+                "Pedido em edição: Nenhuma pizza selecionada"
+            )
+        else:
+            pedido_edicao.value = (
+                f"Pedido em edição: "
+                f"{estado['pizza']} - "
+                f"Quantidade: {estado['quantidade']}"
+            )
+
+    # --------------------------------------------------------------
+    # TAMANHO
     # --------------------------------------------------------------
 
     def escolher_tamanho():
@@ -104,201 +155,152 @@ def main(page: ft.Page):
         )
 
     # --------------------------------------------------------------
-    # FUNÇÃO PARA CRIAR CAMPO DE QUANTIDADE
+    # QUANTIDADE
     # --------------------------------------------------------------
 
     def campo_quantidade():
         return ft.TextField(
             label="Quantidade (1 a 10)",
             width=180,
-            keyboard_type=ft.KeyboardType.NUMBER
+            keyboard_type=ft.KeyboardType.NUMBER,
+            value="1"
         )
 
     # --------------------------------------------------------------
-    # PIZZA DE CALABRESA
+    # CRIAR PIZZA
     # --------------------------------------------------------------
 
-    tamanho_calabresa = escolher_tamanho()
-    quantidade_calabresa = campo_quantidade()
+    def criar_pizza(nome_pizza, ingredientes):
 
-    pizza_calabresa = ft.Container(
-        content=ft.Column(
-            controls=[
-                ft.Text(
-                    "🍕 Calabresa",
-                    size=20,
-                    weight=ft.FontWeight.BOLD
-                ),
-                ft.Text(
-                    "Ingredientes: calabresa, queijo, cebola e molho de tomate."
-                ),
-                ft.Text(
-                    "Escolha o tamanho:",
-                    weight=ft.FontWeight.BOLD
-                ),
-                tamanho_calabresa,
-                quantidade_calabresa
-            ]
-        ),
-        padding=15,
-        border=ft.Border.all(1, "orange")
+        tamanho = escolher_tamanho()
+        quantidade = campo_quantidade()
+
+        def selecionar(e):
+
+            # Guarda o nome da pizza no estado
+            estado["pizza"] = nome_pizza
+
+            # Guarda a quantidade no estado
+            try:
+                qtd = int(quantidade.value)
+
+                if qtd < 1 or qtd > 10:
+                    mensagem.value = (
+                        "A quantidade deve estar entre 1 e 10."
+                    )
+                    page.update()
+                    return
+
+                estado["quantidade"] = qtd
+
+            except ValueError:
+                mensagem.value = (
+                    "Digite uma quantidade válida."
+                )
+                page.update()
+                return
+
+            atualizar_estado()
+
+            mensagem.value = (
+                f"Pizza selecionada: {nome_pizza} 🍕"
+            )
+
+            page.update()
+
+        botao_selecionar = ft.Button(
+            content="Selecionar",
+            on_click=selecionar
+        )
+
+        pizza = ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Text(
+                        f"🍕 {nome_pizza}",
+                        size=20,
+                        weight=ft.FontWeight.BOLD
+                    ),
+
+                    ft.Text(
+                        f"Ingredientes: {ingredientes}"
+                    ),
+
+                    ft.Text(
+                        "Escolha o tamanho:",
+                        weight=ft.FontWeight.BOLD
+                    ),
+
+                    tamanho,
+
+                    quantidade,
+
+                    botao_selecionar
+                ]
+            ),
+            padding=15,
+            border=ft.Border.all(1, "orange"),
+            width=450
+        )
+
+        pizzas.append(
+            {
+                "nome": nome_pizza,
+                "tamanho": tamanho,
+                "quantidade": quantidade
+            }
+        )
+
+        return pizza
+
+    # --------------------------------------------------------------
+    # PIZZAS
+    # --------------------------------------------------------------
+
+    pizza_calabresa = criar_pizza(
+        "Calabresa",
+        "calabresa, queijo, cebola e molho de tomate."
+    )
+
+    pizza_frango = criar_pizza(
+        "Frango com Catupiry",
+        "frango desfiado, catupiry, queijo e molho de tomate."
+    )
+
+    pizza_mussarela = criar_pizza(
+        "Mussarela",
+        "queijo mussarela, tomate, orégano e molho de tomate."
+    )
+
+    pizza_portuguesa = criar_pizza(
+        "Portuguesa",
+        "presunto, queijo, ovo, cebola, tomate e azeitona."
+    )
+
+    pizza_chocolate = criar_pizza(
+        "Chocolate",
+        "chocolate, leite condensado e granulado."
+    )
+
+    pizza_pepperoni = criar_pizza(
+        "Pepperoni",
+        "pepperoni, queijo, molho de tomate e orégano."
     )
 
     # --------------------------------------------------------------
-    # PIZZA DE FRANGO
-    # --------------------------------------------------------------
-
-    tamanho_frango = escolher_tamanho()
-    quantidade_frango = campo_quantidade()
-
-    pizza_frango = ft.Container(
-        content=ft.Column(
-            controls=[
-                ft.Text(
-                    "🍕 Frango com Catupiry",
-                    size=20,
-                    weight=ft.FontWeight.BOLD
-                ),
-                ft.Text(
-                    "Ingredientes: frango desfiado, catupiry, queijo e molho de tomate."
-                ),
-                ft.Text(
-                    "Escolha o tamanho:",
-                    weight=ft.FontWeight.BOLD
-                ),
-                tamanho_frango,
-                quantidade_frango
-            ]
-        ),
-        padding=15,
-        border=ft.Border.all(1, "orange")
-    )
-
-    # --------------------------------------------------------------
-    # PIZZA DE MUSSARELA
-    # --------------------------------------------------------------
-
-    tamanho_mussarela = escolher_tamanho()
-    quantidade_mussarela = campo_quantidade()
-
-    pizza_mussarela = ft.Container(
-        content=ft.Column(
-            controls=[
-                ft.Text(
-                    "🍕 Mussarela",
-                    size=20,
-                    weight=ft.FontWeight.BOLD
-                ),
-                ft.Text(
-                    "Ingredientes: queijo mussarela, tomate, orégano e molho de tomate."
-                ),
-                ft.Text(
-                    "Escolha o tamanho:",
-                    weight=ft.FontWeight.BOLD
-                ),
-                tamanho_mussarela,
-                quantidade_mussarela
-            ]
-        ),
-        padding=15,
-        border=ft.Border.all(1, "orange")
-    )
-
-    # --------------------------------------------------------------
-    # PIZZA PORTUGUESA
-    # --------------------------------------------------------------
-
-    tamanho_portuguesa = escolher_tamanho()
-    quantidade_portuguesa = campo_quantidade()
-
-    pizza_portuguesa = ft.Container(
-        content=ft.Column(
-            controls=[
-                ft.Text(
-                    "🍕 Portuguesa",
-                    size=20,
-                    weight=ft.FontWeight.BOLD
-                ),
-                ft.Text(
-                    "Ingredientes: presunto, queijo, ovo, cebola, tomate e azeitona."
-                ),
-                ft.Text(
-                    "Escolha o tamanho:",
-                    weight=ft.FontWeight.BOLD
-                ),
-                tamanho_portuguesa,
-                quantidade_portuguesa
-            ]
-        ),
-        padding=15,
-        border=ft.Border.all(1, "orange")
-    )
-
-    # --------------------------------------------------------------
-    # PIZZA DE CHOCOLATE
-    # --------------------------------------------------------------
-
-    tamanho_chocolate = escolher_tamanho()
-    quantidade_chocolate = campo_quantidade()
-
-    pizza_chocolate = ft.Container(
-        content=ft.Column(
-            controls=[
-                ft.Text(
-                    "🍫 Chocolate",
-                    size=20,
-                    weight=ft.FontWeight.BOLD
-                ),
-                ft.Text(
-                    "Ingredientes: chocolate, leite condensado e granulado."
-                ),
-                ft.Text(
-                    "Escolha o tamanho:",
-                    weight=ft.FontWeight.BOLD
-                ),
-                tamanho_chocolate,
-                quantidade_chocolate
-            ]
-        ),
-        padding=15,
-        border=ft.Border.all(1, "orange")
-    )
-
-    # --------------------------------------------------------------
-    # RESULTADO DO CALCULO
-    # --------------------------------------------------------------
-
-    resultado = ft.Text(
-        "Parcial: R$ 0,00",
-        size=24,
-        weight=ft.FontWeight.BOLD
-    )
-
-    mensagem = ft.Text(
-        "",
-        size=16
-    )
-
-    # --------------------------------------------------------------
-    # FUNÇÃO PARA CALCULAR O PARCIAL
+    # CALCULAR
     # --------------------------------------------------------------
 
     def calcular(e):
 
         total = 0
 
-        # Lista com todas as pizzas
-        pizzas = [
-            ("Calabresa", tamanho_calabresa, quantidade_calabresa),
-            ("Frango com Catupiry", tamanho_frango, quantidade_frango),
-            ("Mussarela", tamanho_mussarela, quantidade_mussarela),
-            ("Portuguesa", tamanho_portuguesa, quantidade_portuguesa),
-            ("Chocolate", tamanho_chocolate, quantidade_chocolate)
-        ]
+        for pizza in pizzas:
 
-        for nome_pizza, tamanho, quantidade in pizzas:
+            nome_pizza = pizza["nome"]
+            tamanho = pizza["tamanho"]
+            quantidade = pizza["quantidade"]
 
-            # Se não informou quantidade, ignora essa pizza
             if quantidade.value.strip() == "":
                 continue
 
@@ -306,33 +308,37 @@ def main(page: ft.Page):
                 qtd = int(quantidade.value)
 
             except ValueError:
+
                 mensagem.value = (
-                    f"A quantidade da pizza {nome_pizza} deve ser um número."
+                    f"A quantidade da pizza {nome_pizza} "
+                    f"deve ser um número."
                 )
+
                 resultado.value = "Parcial: R$ 0,00"
                 page.update()
                 return
 
-            # Validação da quantidade
             if qtd < 1 or qtd > 10:
+
                 mensagem.value = (
                     f"A quantidade da pizza {nome_pizza} "
                     f"deve estar entre 1 e 10."
                 )
+
                 resultado.value = "Parcial: R$ 0,00"
                 page.update()
                 return
 
-            # Verifica se escolheu o tamanho
             if tamanho.value is None:
+
                 mensagem.value = (
                     f"Escolha o tamanho da pizza {nome_pizza}."
                 )
+
                 resultado.value = "Parcial: R$ 0,00"
                 page.update()
                 return
 
-            # Define o preço
             if tamanho.value == "Media":
                 preco = 32
 
@@ -340,26 +346,25 @@ def main(page: ft.Page):
                 preco = 42
 
             else:
+
                 mensagem.value = (
                     f"A pizza {nome_pizza} está no tamanho Pequena, "
                     f"mas o preço desse tamanho ainda não foi cadastrado."
                 )
+
                 resultado.value = "Parcial: R$ 0,00"
                 page.update()
                 return
 
-            # Calcula
             total += preco * qtd
 
-        # Mostra o resultado
-        resultado.value = f"Parcial: R$ {total:.2f}".replace(".", ",")
+        resultado.value = (
+            f"Parcial: R$ {total:.2f}"
+        ).replace(".", ",")
+
         mensagem.value = "Pedido calculado com sucesso!"
 
         page.update()
-
-    # --------------------------------------------------------------
-    # BOTÃO CALCULAR
-    # --------------------------------------------------------------
 
     botao_calcular = ft.Button(
         content="Calcular",
@@ -367,7 +372,34 @@ def main(page: ft.Page):
     )
 
     # --------------------------------------------------------------
-    # COLUNA DO CARDAPIO
+    # PIZZA TEMPORÁRIA
+    # --------------------------------------------------------------
+
+    def adicionar_pizza_temporaria(e):
+
+        nova_pizza = criar_pizza(
+            "Pizza Temporária",
+            "queijo, molho de tomate e ingredientes especiais."
+        )
+
+        cardapio.controls.insert(
+            len(cardapio.controls) - 4,
+            nova_pizza
+        )
+
+        mensagem.value = (
+            "Pizza temporária adicionada ao cardápio! 🍕"
+        )
+
+        page.update()
+
+    botao_pizza_temporaria = ft.Button(
+        content="Adicionar Pizza Temporária",
+        on_click=adicionar_pizza_temporaria
+    )
+
+    # --------------------------------------------------------------
+    # CARDÁPIO
     # --------------------------------------------------------------
 
     cardapio = ft.Column(
@@ -390,11 +422,14 @@ def main(page: ft.Page):
 
             ft.Row(
                 controls=[
-                    pizza_chocolate
+                    pizza_chocolate,
+                    pizza_pepperoni
                 ]
             ),
 
             ft.Divider(),
+
+            botao_pizza_temporaria,
 
             botao_calcular,
 
@@ -406,13 +441,15 @@ def main(page: ft.Page):
     )
 
     # --------------------------------------------------------------
-    # CONTEUDO PRINCIPAL
+    # TELA DE SELEÇÃO
     # --------------------------------------------------------------
 
-    conteudo = ft.Column(
+    tela_selecao = ft.Column(
         controls=[
             titulo,
             subtitulo,
+            pedido_edicao,
+
             nome,
             instrucao,
             slogan,
@@ -431,7 +468,6 @@ def main(page: ft.Page):
 
             ft.Divider(),
 
-            # Cardápio separado
             cardapio
         ],
         spacing=10,
@@ -439,16 +475,142 @@ def main(page: ft.Page):
     )
 
     # --------------------------------------------------------------
+    # TELA DE REVISÃO
+    # --------------------------------------------------------------
+
+    resumo_pizza = ft.Text(
+        "Nenhuma pizza selecionada",
+        size=24,
+        weight=ft.FontWeight.BOLD
+    )
+
+    resumo_quantidade = ft.Text(
+        "Quantidade: 0",
+        size=20
+    )
+
+    def atualizar_resumo():
+
+        if estado["pizza"] == "":
+            resumo_pizza.value = "Nenhuma pizza selecionada"
+            resumo_quantidade.value = "Quantidade: 0"
+
+        else:
+            resumo_pizza.value = (
+                f"🍕 Pizza: {estado['pizza']}"
+            )
+
+            resumo_quantidade.value = (
+                f"🔢 Quantidade: {estado['quantidade']}"
+            )
+
+    # --------------------------------------------------------------
+    # BOTÃO VOLTAR
+    # --------------------------------------------------------------
+
+    def voltar_para_selecao(e):
+
+        atualizar_estado()
+
+        # Volta para a tela de seleção
+        tela_principal.content = tela_selecao
+
+        page.update()
+
+    botao_voltar = ft.Button(
+        content="← Voltar",
+        on_click=voltar_para_selecao
+    )
+
+    # --------------------------------------------------------------
+    # BOTÃO AVANÇAR
+    # --------------------------------------------------------------
+
+    def avancar(e):
+
+        if estado["pizza"] == "":
+            mensagem.value = (
+                "Selecione uma pizza antes de avançar."
+            )
+
+            tela_principal.content = tela_selecao
+
+            page.update()
+            return
+
+        atualizar_resumo()
+
+        tela_principal.content = tela_revisao
+
+        page.update()
+
+    botao_avancar = ft.Button(
+        content="Avançar →",
+        on_click=avancar
+    )
+
+    # --------------------------------------------------------------
+    # TELA DE REVISÃO
+    # --------------------------------------------------------------
+
+    tela_revisao = ft.Column(
+        controls=[
+            titulo,
+
+            pedido_edicao,
+
+            ft.Divider(),
+
+            ft.Text(
+                "📋 Revisão do pedido",
+                size=28,
+                weight=ft.FontWeight.BOLD
+            ),
+
+            resumo_pizza,
+
+            resumo_quantidade,
+
+            ft.Divider(),
+
+            ft.Row(
+                controls=[
+                    botao_voltar,
+                    botao_avancar
+                ]
+            )
+        ],
+        spacing=15
+    )
+
+    # --------------------------------------------------------------
+    # BOTÕES DA TELA DE SELEÇÃO
+    # --------------------------------------------------------------
+
+    botoes_navegacao = ft.Row(
+        controls=[
+            botao_avancar
+        ]
+    )
+
+    tela_selecao.controls.append(
+        ft.Divider()
+    )
+
+    tela_selecao.controls.append(
+        botoes_navegacao
+    )
+
+    # --------------------------------------------------------------
     # CONTAINER PRINCIPAL
     # --------------------------------------------------------------
 
-    tela = ft.Container(
-        content=conteudo,
+    tela_principal = ft.Container(
+        content=tela_selecao,
         padding=20,
         expand=True
     )
 
-    page.add(tela)
-
+    page.add(tela_principal)
 
 ft.run(main)
