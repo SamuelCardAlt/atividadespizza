@@ -3,6 +3,9 @@ import flet as ft
 
 def main(page: ft.Page):
 
+    # Lista para guardar os pedidos
+    lista_pedidos = []
+
     # Configurações da janela
     page.title = "PizzaDev"
     page.window.width = 400
@@ -21,6 +24,9 @@ def main(page: ft.Page):
     page.padding = 15
     page.spacing = 10
     page.scroll = ft.ScrollMode.AUTO
+
+    # Preço de cada pizza
+    preco_pizza = 40.00
 
     # Ícone e título
     icone = ft.Text(
@@ -44,7 +50,7 @@ def main(page: ft.Page):
         text_align=ft.TextAlign.CENTER
     )
 
-    # Estilo dos campos de escrita
+    # Estilo dos campos
     estilo_campo = {
         "filled": True,
         "fill_color": LARANJA,
@@ -63,9 +69,13 @@ def main(page: ft.Page):
             ft.DropdownOption(key="Calabresa"),
             ft.DropdownOption(key="Frango"),
             ft.DropdownOption(key="Carne"),
+            ft.DropdownOption(key="Portuguesa"),
+            ft.DropdownOption(key="Marguerita"),
+            ft.DropdownOption(key="Quatro Queijos"),
+            ft.DropdownOption(key="Bacon"),
         ],
         bgcolor=LARANJA,
-        color="#FFFFFF",
+        color=BRANCO,
         border_color=LARANJA,
         focused_border_color=BRANCO,
         border_radius=10,
@@ -81,7 +91,7 @@ def main(page: ft.Page):
             ft.DropdownOption(key="Grande"),
         ],
         bgcolor=LARANJA,
-        color="#FFFFFF",
+        color=BRANCO,
         border_color=LARANJA,
         focused_border_color=BRANCO,
         border_radius=10,
@@ -110,15 +120,93 @@ def main(page: ft.Page):
 
     # Resultados
     resultado = ft.Text(size=16, color=BRANCO)
+
     total = ft.Text(
         size=18,
         weight=ft.FontWeight.BOLD,
         color=LARANJA
     )
 
-    preco_pizza = 40.00
+    # Lista visual dos pedidos
+    lista_visual = ft.Column(
+        spacing=10,
+        scroll=ft.ScrollMode.AUTO,
+    )
 
-    # Exibe os detalhes do pedido
+    mensagem_lista = ft.Text(
+        "Nenhum pedido adicionado ainda.",
+        color=BRANCO,
+        size=14,
+    )
+
+    # Formata valores em reais
+    def formatar_moeda(valor):
+        return (
+            f"R$ {valor:,.2f}"
+            .replace(",", "X")
+            .replace(".", ",")
+            .replace("X", ".")
+        )
+
+    # Atualiza a lista de pedidos na tela
+    def atualizar_lista():
+        lista_visual.controls.clear()
+
+        if not lista_pedidos:
+            lista_visual.controls.append(
+                ft.Text(
+                    "Nenhum pedido adicionado ainda.",
+                    color=BRANCO,
+                )
+            )
+        else:
+            for i, pedido in enumerate(lista_pedidos):
+                cartao = ft.Container(
+                    content=ft.Column(
+                        controls=[
+                            ft.Text(
+                                f"🍕 Pedido {i + 1}",
+                                size=16,
+                                weight=ft.FontWeight.BOLD,
+                                color=LARANJA,
+                            ),
+                            ft.Text(
+                                f"Sabor: {pedido['sabor']}",
+                                color=BRANCO,
+                            ),
+                            ft.Text(
+                                f"Tamanho: {pedido['tamanho']}",
+                                color=BRANCO,
+                            ),
+                            ft.Text(
+                                f"Quantidade: {pedido['quantidade']}",
+                                color=BRANCO,
+                            ),
+                            ft.Text(
+                                f"Observação: "
+                                f"{pedido['observacao'] or 'Nenhuma'}",
+                                color=BRANCO,
+                            ),
+                            ft.Text(
+                                f"Subtotal: "
+                                f"{formatar_moeda(pedido['subtotal'])}",
+                                color=LARANJA,
+                                weight=ft.FontWeight.BOLD,
+                            ),
+                        ],
+                        spacing=5,
+                    ),
+                    bgcolor="#242424",
+                    padding=12,
+                    border_radius=10,
+                    border=ft.Border.all(1, LARANJA),
+                )
+
+                lista_visual.controls.append(cartao)
+
+        page.update()
+
+    # Adiciona um pedido à lista
     def exibir_valor(e):
 
         if not sabor.value or not tamanho.value or not quantidade.value:
@@ -143,57 +231,59 @@ def main(page: ft.Page):
             page.update()
             return
 
+        # Calcula o subtotal
+        subtotal = qtd * preco_pizza
+
+        # Salva o pedido na lista
+        pedido = {
+            "sabor": sabor.value,
+            "tamanho": tamanho.value,
+            "quantidade": qtd,
+            "observacao": observacao.value.strip(),
+            "subtotal": subtotal,
+        }
+
+        lista_pedidos.append(pedido)
+
         resultado.value = (
-            f"Pedido: {qtd} pizza(s) {tamanho.value} "
-            f"de {sabor.value}."
+            f"Pedido de {sabor.value} adicionado com sucesso!"
         )
 
-        obs = observacao.value.strip()
+        # Atualiza a lista na tela
+        atualizar_lista()
 
-        if obs:
-            resultado.value += f"\nObservação: {obs}"
+        # Limpa os campos para o próximo pedido
+        sabor.value = None
+        tamanho.value = None
+        quantidade.value = ""
+        observacao.value = ""
 
-        page.update()
-
-    # Calcula o total
+    # Calcula o total de todos os pedidos
     def calcular_total(e):
 
-        if not quantidade.value:
-            total.value = "Informe a quantidade de pizzas."
+        if not lista_pedidos:
+            total.value = "Adicione pelo menos uma pizza."
             page.update()
             return
 
-        try:
-            qtd = int(quantidade.value)
+        valor_total = sum(
+            pedido["subtotal"] for pedido in lista_pedidos
+        )
 
-            if qtd <= 0:
-                total.value = "A quantidade deve ser maior que zero."
-                page.update()
-                return
-
-        except ValueError:
-            total.value = "Digite uma quantidade válida."
-            page.update()
-            return
-
-        valor_total = qtd * preco_pizza
-
-        valor_formatado = (
-            f"R$ {valor_total:,.2f}"
-            .replace(",", "X")
-            .replace(".", ",")
-            .replace("X", ".")
+        quantidade_total = sum(
+            pedido["quantidade"] for pedido in lista_pedidos
         )
 
         total.value = (
-            f"{qtd} pizza(s) × R$ 40,00 = {valor_formatado}"
+            f"{quantidade_total} pizza(s) × "
+            f"{formatar_moeda(preco_pizza)}\n"
+            f"Total do pedido: {formatar_moeda(valor_total)}"
         )
 
         page.update()
 
-    # Limpa os campos
+    # Limpa somente o formulário
     def limpar(e):
-
         sabor.value = None
         tamanho.value = None
         quantidade.value = ""
@@ -212,7 +302,7 @@ def main(page: ft.Page):
 
     # Botões
     botao = ft.Button(
-        content="Adicionar",
+        content="Adicionar pedido",
         icon=ft.Icons.ADD_SHOPPING_CART,
         on_click=exibir_valor,
         expand=True,
@@ -220,7 +310,7 @@ def main(page: ft.Page):
     )
 
     botao_calcular = ft.Button(
-        content="Calcular Total",
+        content="Calcular total",
         icon=ft.Icons.CALCULATE,
         on_click=calcular_total,
         expand=True,
@@ -228,7 +318,7 @@ def main(page: ft.Page):
     )
 
     botao_limpar = ft.Button(
-        content="Limpar",
+        content="Limpar formulário",
         icon=ft.Icons.DELETE_OUTLINE,
         on_click=limpar,
         expand=True,
@@ -250,6 +340,14 @@ def main(page: ft.Page):
     conteudo = ft.Column(
         controls=[
             cabecalho,
+
+            ft.Text(
+                "Monte sua pizza",
+                size=20,
+                weight=ft.FontWeight.BOLD,
+                color=LARANJA,
+            ),
+
             sabor,
             tamanho,
             quantidade,
@@ -267,13 +365,29 @@ def main(page: ft.Page):
 
             resultado,
             total,
+
+            ft.Divider(color=LARANJA),
+
+            ft.Text(
+                "Lista de pedidos",
+                size=22,
+                weight=ft.FontWeight.BOLD,
+                color=LARANJA,
+            ),
+
+            ft.Text(
+                f"Preço por pizza: {formatar_moeda(preco_pizza)}",
+                color=BRANCO,
+            ),
+
+            lista_visual,
         ],
         spacing=15,
         horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
         expand=True,
     )
 
-    # Cartão do formulário
+    # Cartão principal
     layout = ft.Container(
         content=conteudo,
         width=360,
@@ -291,6 +405,9 @@ def main(page: ft.Page):
             vertical_alignment=ft.CrossAxisAlignment.START,
         )
     )
+
+    # Exibe a mensagem inicial da lista
+    atualizar_lista()
 
 
 ft.run(main)
