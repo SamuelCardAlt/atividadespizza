@@ -2,412 +2,414 @@ import flet as ft
 
 
 def main(page: ft.Page):
-
-    # Lista para guardar os pedidos
-    lista_pedidos = []
-
-    # Configurações da janela
+    # CONFIGURACOES
     page.title = "PizzaDev"
     page.window.width = 400
     page.window.height = 760
-    page.window.min_width = 330
-    page.window.min_height = 510
+    page.padding = 15
+    page.bgcolor = "#121212"
+    page.theme_mode = ft.ThemeMode.DARK
 
-    # Cores do aplicativo
     PRETO = "#121212"
     LARANJA = "#FF8C00"
+    CINZA = "#242424"
     BRANCO = "#FFFFFF"
+    VERDE = "#4CAF50"
 
-    # Configurações visuais
-    page.bgcolor = PRETO
-    page.theme_mode = ft.ThemeMode.DARK
-    page.padding = 15
-    page.spacing = 10
-    page.scroll = ft.ScrollMode.AUTO
-
-    # Preço de cada pizza
-    preco_pizza = 40.00
-
-    # Ícone e título
-    icone = ft.Text(
-        "🍕",
-        size=55,
-        text_align=ft.TextAlign.CENTER
-    )
-
-    titulo = ft.Text(
-        "PizzaDev",
-        size=32,
-        weight=ft.FontWeight.BOLD,
-        color=LARANJA,
-        text_align=ft.TextAlign.CENTER
-    )
-
-    subtitulo = ft.Text(
-        "Monte seu pedido com segurança",
-        size=14,
-        color=BRANCO,
-        text_align=ft.TextAlign.CENTER
-    )
-
-    # Estilo dos campos
-    estilo_campo = {
-        "filled": True,
-        "fill_color": LARANJA,
-        "color": "#000000",
-        "border_color": LARANJA,
-        "focused_border_color": BRANCO,
-        "label_style": ft.TextStyle(color="#000000"),
-        "cursor_color": "#000000",
-        "border_radius": 10,
+    cardapio = {
+        "Calabresa": {
+            "ingredientes": "Calabresa, cebola e queijo",
+            "precos": {"Pequena": 25.00, "Média": 32.00, "Grande": 42.00},
+        },
+        "Frango com Catupiry": {
+            "ingredientes": "Frango desfiado e catupiry",
+            "precos": {"Pequena": 27.00, "Média": 35.00, "Grande": 45.00},
+        },
+        "Mussarela": {
+            "ingredientes": "Mussarela, tomate e orégano",
+            "precos": {"Pequena": 23.00, "Média": 30.00, "Grande": 40.00},
+        },
+        "Portuguesa": {
+            "ingredientes": "Presunto, ovo, cebola e queijo",
+            "precos": {"Pequena": 28.00, "Média": 36.00, "Grande": 46.00},
+        },
+        "Chocolate": {
+            "ingredientes": "Chocolate ao leite",
+            "precos": {"Pequena": 25.00, "Média": 33.00, "Grande": 43.00},
+        },
+        "Pepperoni": {
+            "ingredientes": "Pepperoni, queijo e molho",
+            "precos": {"Pequena": 28.00, "Média": 36.00, "Grande": 46.00},
+        },
     }
 
-    # Seleção do sabor
-    sabor = ft.Dropdown(
+    pedidos = []
+    entrega_selecionada = "Entrega em casa"
+    pagamento_selecionado = "Pix"
+
+    campo_sabor = ft.Dropdown(
         label="Escolha o sabor",
-        options=[
-            ft.DropdownOption(key="Calabresa"),
-            ft.DropdownOption(key="Frango"),
-            ft.DropdownOption(key="Carne"),
-            ft.DropdownOption(key="Portuguesa"),
-            ft.DropdownOption(key="Marguerita"),
-            ft.DropdownOption(key="Quatro Queijos"),
-            ft.DropdownOption(key="Bacon"),
-        ],
-        bgcolor=LARANJA,
-        color=BRANCO,
+        options=[ft.DropdownOption(key=sabor, text=sabor) for sabor in cardapio],
+        value="Calabresa",
+        expand=True,
         border_color=LARANJA,
-        focused_border_color=BRANCO,
-        border_radius=10,
-        expand=True,
     )
-
-    # Seleção do tamanho
-    tamanho = ft.Dropdown(
-        label="Escolha o tamanho",
+    campo_tamanho = ft.Dropdown(
+        label="Tamanho",
         options=[
-            ft.DropdownOption(key="Pequena"),
-            ft.DropdownOption(key="Média"),
-            ft.DropdownOption(key="Grande"),
+            ft.DropdownOption(key="Pequena", text="Pequena"),
+            ft.DropdownOption(key="Média", text="Média"),
+            ft.DropdownOption(key="Grande", text="Grande"),
         ],
-        bgcolor=LARANJA,
-        color=BRANCO,
+        value="Média",
+        expand=True,
         border_color=LARANJA,
-        focused_border_color=BRANCO,
-        border_radius=10,
-        expand=True,
+    )
+    campo_quantidade = ft.Dropdown(
+        label="Quantidade",
+        options=[ft.DropdownOption(key=str(n), text=str(n)) for n in range(1, 11)],
+        value="1",
+        width=130,
+        border_color=LARANJA,
     )
 
-    # Quantidade
-    quantidade = ft.TextField(
-        label="Digite a quantidade",
-        keyboard_type=ft.KeyboardType.NUMBER,
-        expand=True,
-        **estilo_campo
-    )
+    mensagem = ft.Text(value="", color=VERDE, size=14)
+    lista_pedidos = ft.Column(spacing=8)
+    conteudo = ft.Column(scroll=ft.ScrollMode.AUTO, spacing=12, expand=True)
 
-    # Observações
-    observacao = ft.TextField(
-        label="Observações do pedido",
-        hint_text="Ex.: Sem cebola ou borda recheada",
-        multiline=True,
-        min_lines=2,
-        max_lines=3,
-        max_length=120,
-        expand=True,
-        **estilo_campo
-    )
+    def preco(valor):
+        return f"R$ {valor:.2f}".replace(".", ",")
 
-    # Resultados
-    resultado = ft.Text(size=16, color=BRANCO)
+    def titulo(texto):
+        return ft.Text(texto, size=22, weight=ft.FontWeight.BOLD, color=LARANJA)
 
-    total = ft.Text(
-        size=18,
-        weight=ft.FontWeight.BOLD,
-        color=LARANJA
-    )
-
-    # Lista visual dos pedidos
-    lista_visual = ft.Column(
-        spacing=10,
-        scroll=ft.ScrollMode.AUTO,
-    )
-
-    mensagem_lista = ft.Text(
-        "Nenhum pedido adicionado ainda.",
-        color=BRANCO,
-        size=14,
-    )
-
-    # Formata valores em reais
-    def formatar_moeda(valor):
-        return (
-            f"R$ {valor:,.2f}"
-            .replace(",", "X")
-            .replace(".", ",")
-            .replace("X", ".")
+    def botao(texto, funcao, icone=None):
+        return ft.Button(
+            content=ft.Row(
+                controls=[
+                    *([ft.Icon(icone)] if icone else []),
+                    ft.Text(texto),
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                tight=True,
+            ),
+            on_click=funcao,
+            style=ft.ButtonStyle(
+                bgcolor=LARANJA,
+                color=PRETO,
+                padding=12,
+                shape=ft.RoundedRectangleBorder(radius=10),
+            ),
         )
 
-    # Atualiza a lista de pedidos na tela
-    def atualizar_lista():
-        lista_visual.controls.clear()
+    def mostrar_mensagem(texto, cor=VERDE):
+        mensagem.value = texto
+        mensagem.color = cor
+        page.update()
 
-        if not lista_pedidos:
-            lista_visual.controls.append(
-                ft.Text(
-                    "Nenhum pedido adicionado ainda.",
-                    color=BRANCO,
-                )
+    def desenhar_pedidos():
+        lista_pedidos.controls.clear()
+        if not pedidos:
+            lista_pedidos.controls.append(
+                ft.Text("Seu carrinho está vazio.", color="#AAAAAA")
             )
         else:
-            for i, pedido in enumerate(lista_pedidos):
-                cartao = ft.Container(
+            for indice, pedido in enumerate(pedidos):
+                subtotal = pedido["preco"] * pedido["quantidade"]
+                lista_pedidos.controls.append(
+                    ft.Container(
+                        content=ft.Row(
+                            controls=[
+                                ft.Icon(ft.Icons.SHOPPING_CART, color=LARANJA, size=24),
+                                ft.Column(
+                                    controls=[
+                                        ft.Text(pedido["sabor"], weight=ft.FontWeight.BOLD, color=BRANCO),
+                                        ft.Text(
+                                            f'{pedido["tamanho"]} | Quantidade: {pedido["quantidade"]}',
+                                            size=12,
+                                            color="#CCCCCC",
+                                        ),
+                                        ft.Text(preco(subtotal), color=LARANJA, weight=ft.FontWeight.BOLD),
+                                    ],
+                                    spacing=3,
+                                    expand=True,
+                                ),
+                                ft.IconButton(
+                                    icon=ft.Icons.CLOSE,
+                                    icon_color="#FF5252",
+                                    tooltip="Excluir pedido",
+                                    on_click=lambda e, idx=indice: excluir_pedido(idx),
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        ),
+                        bgcolor=CINZA,
+                        padding=10,
+                        border_radius=10,
+                    )
+                )
+
+    def abrir_cardapio(e=None):
+        conteudo.controls.clear()
+        conteudo.controls.extend(
+            [
+                ft.Row(
+                    controls=[
+                        ft.Icon(ft.Icons.LOCAL_PIZZA, color=LARANJA, size=34),
+                        ft.Text("PizzaDev", size=32, weight=ft.FontWeight.BOLD, color=LARANJA),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                ),
+                ft.Text("Monte seu pedido com segurança!", color=BRANCO),
+                ft.Divider(color=LARANJA),
+                titulo("Nosso cardápio"),
+            ]
+        )
+
+        for sabor, dados in cardapio.items():
+            conteudo.controls.append(
+                ft.Container(
                     content=ft.Column(
                         controls=[
+                            ft.Text(sabor, size=18, weight=ft.FontWeight.BOLD, color=LARANJA),
+                            ft.Text(dados["ingredientes"], size=13, color=BRANCO),
                             ft.Text(
-                                f"🍕 Pedido {i + 1}",
-                                size=16,
-                                weight=ft.FontWeight.BOLD,
-                                color=LARANJA,
-                            ),
-                            ft.Text(
-                                f"Sabor: {pedido['sabor']}",
-                                color=BRANCO,
-                            ),
-                            ft.Text(
-                                f"Tamanho: {pedido['tamanho']}",
-                                color=BRANCO,
-                            ),
-                            ft.Text(
-                                f"Quantidade: {pedido['quantidade']}",
-                                color=BRANCO,
-                            ),
-                            ft.Text(
-                                f"Observação: "
-                                f"{pedido['observacao'] or 'Nenhuma'}",
-                                color=BRANCO,
-                            ),
-                            ft.Text(
-                                f"Subtotal: "
-                                f"{formatar_moeda(pedido['subtotal'])}",
-                                color=LARANJA,
-                                weight=ft.FontWeight.BOLD,
+                                f'Pequena: {preco(dados["precos"]["Pequena"])} | '
+                                f'Média: {preco(dados["precos"]["Média"])} | '
+                                f'Grande: {preco(dados["precos"]["Grande"])}',
+                                size=12,
+                                color="#CCCCCC",
                             ),
                         ],
                         spacing=5,
                     ),
-                    bgcolor="#242424",
+                    bgcolor=CINZA,
                     padding=12,
                     border_radius=10,
-                    border=ft.Border.all(1, LARANJA),
                 )
-
-                lista_visual.controls.append(cartao)
-
-        page.update()
-
-    # Adiciona um pedido à lista
-    def exibir_valor(e):
-
-        if not sabor.value or not tamanho.value or not quantidade.value:
-            resultado.value = (
-                "Preencha o sabor, o tamanho e a quantidade!"
             )
-            page.update()
+
+        conteudo.controls.extend(
+            [
+                titulo("Monte sua pizza"),
+                campo_sabor,
+                campo_tamanho,
+                campo_quantidade,
+                botao("Adicionar ao carrinho", adicionar_pedido, ft.Icons.ADD_SHOPPING_CART),
+                mensagem,
+                ft.Divider(color=LARANJA),
+                ft.Row(
+                    controls=[
+                        titulo("Seus pedidos"),
+                        ft.Icon(ft.Icons.SHOPPING_CART, color=LARANJA, size=25),
+                    ],
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                ),
+                lista_pedidos,
+                botao("Revisar e finalizar compra", abrir_revisao, ft.Icons.ARROW_FORWARD),
+            ]
+        )
+        desenhar_pedidos()
+        page.controls.clear()
+        page.add(ft.SafeArea(content=conteudo, expand=True))
+        page.update()
+
+    def adicionar_pedido(e):
+        sabor = campo_sabor.value
+        tamanho = campo_tamanho.value
+        quantidade = int(campo_quantidade.value or "1")
+        if not sabor or not tamanho:
+            mostrar_mensagem("Selecione o sabor e o tamanho.", "#FF5252")
+            return
+        pedidos.append(
+            {
+                "sabor": sabor,
+                "tamanho": tamanho,
+                "quantidade": quantidade,
+                "preco": cardapio[sabor]["precos"][tamanho],
+            }
+        )
+        desenhar_pedidos()
+        mostrar_mensagem("Pizza adicionada ao carrinho!")
+        page.update()
+
+    def excluir_pedido(indice):
+        if 0 <= indice < len(pedidos):
+            pedidos.pop(indice)
+        desenhar_pedidos()
+        mostrar_mensagem("Pedido removido do carrinho.")
+        page.update()
+
+    def alterar_entrega(e):
+        nonlocal entrega_selecionada
+        entrega_selecionada = e.control.value
+
+    def alterar_pagamento(e):
+        nonlocal pagamento_selecionado
+        pagamento_selecionado = e.control.value
+
+    def abrir_revisao(e=None):
+        if not pedidos:
+            mostrar_mensagem("Adicione pelo menos uma pizza antes de continuar.", "#FFB74D")
             return
 
-        try:
-            qtd = int(quantidade.value)
+        conteudo.controls.clear()
+        total = sum(p["preco"] * p["quantidade"] for p in pedidos)
+        quantidade_total = sum(p["quantidade"] for p in pedidos)
 
-            if qtd <= 0:
-                resultado.value = (
-                    "Digite uma quantidade maior que zero!"
+        conteudo.controls.extend(
+            [
+                ft.Row(
+                    controls=[
+                        ft.Icon(ft.Icons.RECEIPT_LONG, color=LARANJA, size=30),
+                        titulo("Revisão do pedido"),
+                    ]
+                ),
+                ft.Text("Confira os itens antes de finalizar.", color="#CCCCCC"),
+                ft.Divider(color=LARANJA),
+            ]
+        )
+
+        for pedido in pedidos:
+            subtotal = pedido["preco"] * pedido["quantidade"]
+            conteudo.controls.append(
+                ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.Column(
+                                controls=[
+                                    ft.Text(pedido["sabor"], color=BRANCO, weight=ft.FontWeight.BOLD),
+                                    ft.Text(
+                                        f'{pedido["tamanho"]} x {pedido["quantidade"]}',
+                                        color="#BBBBBB",
+                                        size=13,
+                                    ),
+                                ],
+                                spacing=4,
+                                expand=True,
+                            ),
+                            ft.Text(preco(subtotal), color=LARANJA, weight=ft.FontWeight.BOLD),
+                        ]
+                    ),
+                    bgcolor=CINZA,
+                    padding=12,
+                    border_radius=8,
                 )
-                page.update()
-                return
+            )
 
-        except ValueError:
-            resultado.value = "Digite uma quantidade válida!"
-            page.update()
-            return
-
-        # Calcula o subtotal
-        subtotal = qtd * preco_pizza
-
-        # Salva o pedido na lista
-        pedido = {
-            "sabor": sabor.value,
-            "tamanho": tamanho.value,
-            "quantidade": qtd,
-            "observacao": observacao.value.strip(),
-            "subtotal": subtotal,
-        }
-
-        lista_pedidos.append(pedido)
-
-        resultado.value = (
-            f"Pedido de {sabor.value} adicionado com sucesso!"
+        conteudo.controls.extend(
+            [
+                ft.Divider(color=LARANJA),
+                ft.Row(
+                    controls=[
+                        ft.Text("TOTAL DO PEDIDO", size=16, weight=ft.FontWeight.BOLD),
+                        ft.Text(preco(total), size=20, weight=ft.FontWeight.BOLD, color=LARANJA),
+                    ],
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                ),
+                titulo("Forma de recebimento"),
+                ft.Dropdown(
+                    label="Como deseja receber?",
+                    value=entrega_selecionada,
+                    options=[
+                        ft.DropdownOption(key="Entrega em casa", text="Entrega em casa"),
+                        ft.DropdownOption(
+                            key="Retirada no estabelecimento",
+                            text="Retirada no estabelecimento",
+                        ),
+                    ],
+                    border_color=LARANJA,
+                    on_select=alterar_entrega,
+                ),
+                titulo("Método de pagamento"),
+                ft.Dropdown(
+                    label="Escolha o pagamento",
+                    value=pagamento_selecionado,
+                    options=[
+                        ft.DropdownOption(key="Pix", text="Pix"),
+                        ft.DropdownOption(key="Cartão", text="Cartão"),
+                    ],
+                    border_color=LARANJA,
+                    on_select=alterar_pagamento,
+                ),
+                ft.Text(
+                    "Demonstração: nenhum pagamento real será processado.",
+                    color="#BBBBBB",
+                    size=12,
+                ),
+                mensagem,
+                botao("Concluir pedido", concluir_pedido, ft.Icons.CHECK_CIRCLE),
+                ft.Button(
+                    content="Voltar ao cardápio",
+                    on_click=abrir_cardapio,
+                    style=ft.ButtonStyle(color=LARANJA),
+                ),
+            ]
         )
-
-        # Atualiza a lista na tela
-        atualizar_lista()
-
-        # Limpa os campos para o próximo pedido
-        sabor.value = None
-        tamanho.value = None
-        quantidade.value = ""
-        observacao.value = ""
-
-    # Calcula o total de todos os pedidos
-    def calcular_total(e):
-
-        if not lista_pedidos:
-            total.value = "Adicione pelo menos uma pizza."
-            page.update()
-            return
-
-        valor_total = sum(
-            pedido["subtotal"] for pedido in lista_pedidos
-        )
-
-        quantidade_total = sum(
-            pedido["quantidade"] for pedido in lista_pedidos
-        )
-
-        total.value = (
-            f"{quantidade_total} pizza(s) × "
-            f"{formatar_moeda(preco_pizza)}\n"
-            f"Total do pedido: {formatar_moeda(valor_total)}"
-        )
-
+        page.controls.clear()
+        page.add(ft.SafeArea(content=conteudo, expand=True))
         page.update()
 
-    # Limpa somente o formulário
-    def limpar(e):
-        sabor.value = None
-        tamanho.value = None
-        quantidade.value = ""
-        observacao.value = ""
-        resultado.value = ""
-        total.value = ""
+    def concluir_pedido(e):
+        if not pedidos:
+            abrir_cardapio()
+            mostrar_mensagem("Seu carrinho está vazio.", "#FF5252")
+            return
 
+        total = sum(p["preco"] * p["quantidade"] for p in pedidos)
+        quantidade_total = sum(p["quantidade"] for p in pedidos)
+        entrega = entrega_selecionada
+        pagamento = pagamento_selecionado
+        pedidos.clear()
+
+        conteudo.controls.clear()
+        conteudo.controls.extend(
+            [
+                ft.Container(
+                    content=ft.Column(
+                        controls=[
+                            ft.Icon(ft.Icons.CHECK_CIRCLE, color=VERDE, size=75),
+                            ft.Text(
+                                "Pedido concluído!",
+                                size=27,
+                                weight=ft.FontWeight.BOLD,
+                                color=VERDE,
+                                text_align=ft.TextAlign.CENTER,
+                            ),
+                            ft.Text(
+                                "Obrigado por escolher a PizzaDev!",
+                                color=BRANCO,
+                                text_align=ft.TextAlign.CENTER,
+                            ),
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=12,
+                    ),
+                    padding=20,
+                    bgcolor=CINZA,
+                    border_radius=15,
+                ),
+                ft.Divider(color=LARANJA),
+                titulo("Resumo final"),
+                ft.Text(f"Quantidade de pizzas: {quantidade_total}"),
+                ft.Text(f"Recebimento: {entrega}"),
+                ft.Text(f"Pagamento: {pagamento}"),
+                ft.Text(f"Total: {preco(total)}", size=22, weight=ft.FontWeight.BOLD, color=LARANJA),
+                ft.Text("Status: pedido registrado no aplicativo.", color=VERDE),
+                ft.Text(
+                    "Pagamento e entrega precisam ser confirmados fora do aplicativo.",
+                    color="#BBBBBB",
+                    size=12,
+                ),
+                botao("Voltar ao início", abrir_cardapio, ft.Icons.HOME),
+            ]
+        )
+        page.controls.clear()
+        page.add(ft.SafeArea(content=conteudo, expand=True))
         page.update()
 
-    # Estilo dos botões
-    estilo_botao = ft.ButtonStyle(
-        bgcolor=LARANJA,
-        color="#000000",
-        shape=ft.RoundedRectangleBorder(radius=10),
-    )
-
-    # Botões
-    botao = ft.Button(
-        content="Adicionar pedido",
-        icon=ft.Icons.ADD_SHOPPING_CART,
-        on_click=exibir_valor,
-        expand=True,
-        style=estilo_botao,
-    )
-
-    botao_calcular = ft.Button(
-        content="Calcular total",
-        icon=ft.Icons.CALCULATE,
-        on_click=calcular_total,
-        expand=True,
-        style=estilo_botao,
-    )
-
-    botao_limpar = ft.Button(
-        content="Limpar formulário",
-        icon=ft.Icons.DELETE_OUTLINE,
-        on_click=limpar,
-        expand=True,
-        style=estilo_botao,
-    )
-
-    # Cabeçalho
-    cabecalho = ft.Column(
-        controls=[
-            icone,
-            titulo,
-            subtitulo,
-        ],
-        spacing=5,
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-    )
-
-    # Formulário
-    conteudo = ft.Column(
-        controls=[
-            cabecalho,
-
-            ft.Text(
-                "Monte sua pizza",
-                size=20,
-                weight=ft.FontWeight.BOLD,
-                color=LARANJA,
-            ),
-
-            sabor,
-            tamanho,
-            quantidade,
-            observacao,
-
-            ft.Column(
-                controls=[
-                    botao,
-                    botao_calcular,
-                    botao_limpar,
-                ],
-                spacing=10,
-                horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
-            ),
-
-            resultado,
-            total,
-
-            ft.Divider(color=LARANJA),
-
-            ft.Text(
-                "Lista de pedidos",
-                size=22,
-                weight=ft.FontWeight.BOLD,
-                color=LARANJA,
-            ),
-
-            ft.Text(
-                f"Preço por pizza: {formatar_moeda(preco_pizza)}",
-                color=BRANCO,
-            ),
-
-            lista_visual,
-        ],
-        spacing=15,
-        horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
-        expand=True,
-    )
-
-    # Cartão principal
-    layout = ft.Container(
-        content=conteudo,
-        width=360,
-        padding=15,
-        bgcolor=PRETO,
-        border_radius=15,
-        alignment=ft.Alignment.TOP_CENTER,
-    )
-
-    # Centraliza o aplicativo
-    page.add(
-        ft.Row(
-            controls=[layout],
-            alignment=ft.MainAxisAlignment.CENTER,
-            vertical_alignment=ft.CrossAxisAlignment.START,
-        )
-    )
-
-    # Exibe a mensagem inicial da lista
-    atualizar_lista()
+    abrir_cardapio()
 
 
-ft.run(main)
+if __name__ == "__main__":
+    ft.run(main)
